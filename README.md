@@ -127,7 +127,7 @@ git config --global user.email "personal@gmail.com"
 ### クローンして組織リポジトリで管理する場合
 
 ```bash
-# 1. GitLab等にクローン後、originを変更
+# 1. GitLab等でクローン後、originを変更
 git clone https://github.com/masuwaka/dotfiles.git
 cd dotfiles
 git remote set-url origin https://gitlab.internal/yourorg/dotfiles.git

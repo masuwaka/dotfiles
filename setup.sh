@@ -329,11 +329,7 @@ change_default_shell() {
 main() {
     log_info "🚀 Dotfiles セットアップを開始します (Ubuntu専用)"
     log_info "スクリプトディレクトリ: $SCRIPT_DIR"
-    
-    if [ -n "$NFS_SHARED_TOOLS" ]; then
-        log_info "NFS環境: 開発ツールを $NFS_SHARED_TOOLS に配置"
-        mkdir -p "$NFS_SHARED_TOOLS"
-    fi
+    log_info "開発ツール配置先: $TOOLS_DIR"
     
     # 既存インストールの確認と更新モード
     if [ -f "$HOME/.dotfiles-setup-completed" ]; then

@@ -7,11 +7,11 @@
 # =============================================================================
 
 # -----------------------------------------------------------------------------
-# プロキシ設定
+# マシン固有のプロキシ設定（組織設定と異なる場合のみ）
 # -----------------------------------------------------------------------------
-# export http_proxy="http://proxy.example.com:8080"
-# export https_proxy="http://proxy.example.com:8080"
-# export no_proxy="localhost,127.0.0.1,.example.com"
+# export http_proxy="http://home-proxy.example.com:3128"
+# export https_proxy="http://home-proxy.example.com:3128"
+# export no_proxy="localhost,127.0.0.1,192.168.1.0/24"
 
 # -----------------------------------------------------------------------------
 # 環境固有のパス設定
@@ -55,11 +55,10 @@
 # git config --global includeIf.gitdir:~/personal/.path ~/.gitconfig-personal
 
 # -----------------------------------------------------------------------------
-# 追加の開発ツール設定
+# マシン固有の開発ツール設定
 # -----------------------------------------------------------------------------
-# export JAVA_HOME="/usr/lib/jvm/java-11-openjdk"
-# export MAVEN_OPTS="-Xmx2048m"
-# export GRADLE_USER_HOME="$HOME/.gradle"
+# export JAVA_HOME="/usr/lib/jvm/java-17-openjdk"  # マシン固有のJavaバージョン
+# export DOCKER_HOST="unix:///var/run/docker.sock"  # ローカルDocker設定
 
 # -----------------------------------------------------------------------------
 # 関数定義（環境固有）
