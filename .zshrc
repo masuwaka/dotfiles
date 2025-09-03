@@ -62,12 +62,32 @@ fi
 
 # NFS環境での最適化設定
 if [ "$DOTFILES_ON_NFS" = true ]; then
-    # 補完キャッシュをローカルの/tmpに配置
-    export ZSH_CACHE_DIR="/tmp/.zsh-cache-$USER"
-    mkdir -p "$ZSH_CACHE_DIR"
+    # 安全なローカルディレクトリの選択（優先順位順）
+    LOCAL_CACHE_BASE=""
     
-    # 履歴ファイルもローカルに配置
-    export HISTFILE="/tmp/.zsh-history-$USER"
+    # 1. XDG仕様のランタイムディレクトリ（最優先）
+    if [ -n "$XDG_RUNTIME_DIR" ] && [ -d "$XDG_RUNTIME_DIR" ] && [ -w "$XDG_RUNTIME_DIR" ]; then
+        LOCAL_CACHE_BASE="$XDG_RUNTIME_DIR"
+    # 2. ユーザー専用tmpディレクトリ
+    elif [ -d "/tmp" ] && [ -w "/tmp" ]; then
+        LOCAL_CACHE_BASE="/tmp/$USER-zsh"
+        mkdir -p "$LOCAL_CACHE_BASE" && chmod 700 "$LOCAL_CACHE_BASE" 2>/dev/null
+    # 3. /var/tmp（一般的に/tmpより永続的）
+    elif [ -d "/var/tmp" ] && [ -w "/var/tmp" ]; then
+        LOCAL_CACHE_BASE="/var/tmp/$USER-zsh"
+        mkdir -p "$LOCAL_CACHE_BASE" && chmod 700 "$LOCAL_CACHE_BASE" 2>/dev/null
+    # 4. フォールバック: ホームディレクトリの隠しディレクトリ
+    else
+        LOCAL_CACHE_BASE="$HOME/.zsh-local-cache"
+        mkdir -p "$LOCAL_CACHE_BASE" && chmod 700 "$LOCAL_CACHE_BASE" 2>/dev/null
+    fi
+    
+    # 補完キャッシュをローカルに配置
+    export ZSH_CACHE_DIR="$LOCAL_CACHE_BASE/cache"
+    mkdir -p "$ZSH_CACHE_DIR" && chmod 700 "$ZSH_CACHE_DIR" 2>/dev/null
+    
+    # 履歴ファイルもローカルに配置（セッション識別子付き）
+    export HISTFILE="$LOCAL_CACHE_BASE/history-$$"
     
     # NFSでのファイルロック問題を回避
     setopt NO_HIST_FCNTL_LOCK
@@ -345,4 +365,6 @@ if [ "$DOTFILES_ON_NFS" = true ] && [ -n "$DOTFILES_DEBUG" ]; then
     echo "🔧 NFS環境で動作中 - 軽量化モード有効"
     echo "   履歴ファイル: $HISTFILE"
     echo "   キャッシュディレクトリ: $ZSH_CACHE_DIR"
+    echo "   ローカルキャッシュベース: $LOCAL_CACHE_BASE"
+    echo "   セッションPID: $$"
 fi
