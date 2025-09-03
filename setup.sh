@@ -90,8 +90,8 @@ get_latest_release() {
 # 必要なパッケージのインストール
 install_system_packages() {
     log_info "システムパッケージをインストール中..."
+    log_warning "パッケージインストール前に 'sudo apt update' を実行してください"
     
-    sudo apt-get update
     sudo apt-get install -y \
         curl \
         wget \
@@ -131,7 +131,7 @@ install_zplug() {
     # シンボリックリンクの作成
     if [ -L "$HOME/.zplug" ]; then
         rm "$HOME/.zplug"
-    elif [ -d "$HOME/.zplug" ]; then
+    elif [ -e "$HOME/.zplug" ]; then
         log_warning "既存の ~/.zplug をバックアップ中..."
         mv "$HOME/.zplug" "$HOME/.zplug.backup.$(date +%Y%m%d_%H%M%S)"
     fi
@@ -157,7 +157,7 @@ install_fzf() {
     # シンボリックリンクの作成
     if [ -L "$HOME/.fzf" ]; then
         rm "$HOME/.fzf"
-    elif [ -d "$HOME/.fzf" ]; then
+    elif [ -e "$HOME/.fzf" ]; then
         log_warning "既存の ~/.fzf をバックアップ中..."
         mv "$HOME/.fzf" "$HOME/.fzf.backup.$(date +%Y%m%d_%H%M%S)"
     fi
@@ -189,7 +189,7 @@ install_dev_tools_to_repo() {
         if [ -d "$target_dir" ]; then
             if [ -L "$home_link" ]; then
                 rm "$home_link"
-            elif [ -d "$home_link" ]; then
+            elif [ -e "$home_link" ]; then
                 log_warning "既存の ~/.$tool_name をバックアップ中..."
                 mv "$home_link" "$home_link.backup.$(date +%Y%m%d_%H%M%S)"
             fi
@@ -301,10 +301,12 @@ install_modern_tools() {
 setup_zshrc() {
     log_info ".zshrc をセットアップ中..."
     
-    # 既存の.zshrcをバックアップ
-    if [ -f "$HOME/.zshrc" ] && [ ! -L "$HOME/.zshrc" ]; then
+    # 既存の.zshrcの処理
+    if [ -L "$HOME/.zshrc" ]; then
+        rm "$HOME/.zshrc"
+    elif [ -e "$HOME/.zshrc" ]; then
         log_warning "既存の ~/.zshrc をバックアップ中..."
-        cp "$HOME/.zshrc" "$HOME/.zshrc.backup.$(date +%Y%m%d_%H%M%S)"
+        mv "$HOME/.zshrc" "$HOME/.zshrc.backup.$(date +%Y%m%d_%H%M%S)"
     fi
     
     # シンボリックリンクを作成
