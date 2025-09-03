@@ -34,14 +34,11 @@ cd ~/.dotfiles
 
 ### NFS共有環境での利用
 
-開発ツールをNFSで共有する場合:
+NFS環境では開発ツールをdotfilesリポジトリ内に配置:
 
 ```bash
-# 初回マシン（ツールをインストール）
-./setup.sh --nfs-shared-tools ~/shared/devtools
-
-# 他のマシン（既存ツールへリンク）
-./setup.sh --nfs-shared-tools ~/shared/devtools
+# NFS環境での初回セットアップ
+./setup.sh --nfs
 
 # 各マシンで初回のみ実行
 pyenv install 3.11.0 && pyenv global 3.11.0
@@ -148,12 +145,12 @@ vim .gitignore  # .zshrc.customの行をコメントアウト
 # 5. コミットしてpush
 git add .zshrc.custom .gitignore
 git commit -m "Add organization-specific settings"
-git push origin master
+git push origin main
 
 # 6. upstream更新の取り込み
 git fetch upstream
-git merge upstream/master
-git push origin master
+git merge upstream/main
+git push origin main
 ```
 
 ### デバッグモード

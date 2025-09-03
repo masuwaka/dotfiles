@@ -53,9 +53,9 @@ fi
 # コマンドライン引数の解析
 while [[ $# -gt 0 ]]; do
     case $1 in
-        --nfs-shared-tools)
-            NFS_SHARED_TOOLS="$2"
-            shift 2
+        --nfs)
+            NFS_SHARED_TOOLS="$SCRIPT_DIR/tools"
+            shift
             ;;
         --skip-zplug)
             INSTALL_ZPLUG=false
@@ -72,7 +72,7 @@ while [[ $# -gt 0 ]]; do
         -h|--help)
             echo "使用方法: $0 [オプション]"
             echo "オプション:"
-            echo "  --nfs-shared-tools PATH  NFS共有された開発ツールのパス"
+            echo "  --nfs                   NFS環境で開発ツールをリポジトリ内に配置"
             echo "  --skip-zplug            Zplugのインストールをスキップ"
             echo "  --skip-fzf              FZFのインストールをスキップ"
             echo "  --skip-dev-tools        開発ツールのインストール/リンクをスキップ"
@@ -430,7 +430,8 @@ main() {
     log_info "スクリプトディレクトリ: $SCRIPT_DIR"
     
     if [ -n "$NFS_SHARED_TOOLS" ]; then
-        log_info "NFS共有ツールパス: $NFS_SHARED_TOOLS"
+        log_info "NFS環境: 開発ツールを $NFS_SHARED_TOOLS に配置"
+        mkdir -p "$NFS_SHARED_TOOLS"
     fi
     
     # 既存インストールの確認と更新モード
@@ -473,13 +474,13 @@ main() {
     
     if [ -n "$NFS_SHARED_TOOLS" ]; then
         log_info ""
-        log_info "📝 NFS共有環境のメモ:"
-        log_info "  • 開発ツールは $NFS_SHARED_TOOLS からシンボリックリンクされています"
-        log_info "  • 各マシンで同じセットアップスクリプトを実行してください"
-        log_info "  • 初回は各ツールでバージョンのインストールが必要です:"
-        log_info "    - pyenv install 3.11.0  # 例"
+        log_info "📝 NFS環境のメモ:"
+        log_info "  • 開発ツールはリポジトリ内 ($NFS_SHARED_TOOLS) に配置されています"
+        log_info "  • 他のマシンでも同じセットアップを実行してください: ./setup.sh --nfs"
+        log_info "  • 初回のみ各ツールでバージョンをインストール:"
+        log_info "    - pyenv install 3.11.0 && pyenv global 3.11.0"
         log_info "    - nvm install --lts"
-        log_info "    - rbenv install 3.2.0    # 例"
+        log_info "    - rbenv install 3.2.0 && rbenv global 3.2.0"
     fi
 }
 
