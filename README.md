@@ -15,6 +15,7 @@
 - ⌨️ **キーバインド** - Emacs風の便利なキーバインド
 - 🎯 **FZF統合** - ファジーファインダーによる高速検索
 - 🛠️ **開発環境** - Python(pyenv)、Node.js(nvm)、Ruby(rbenv)の自動設定
+- 🌐 **NFS対応** - NFSマウント環境での最適化とパフォーマンス向上
 
 **含まれるプラグイン:**
 - `zsh-users/zsh-completions` - 補完機能の拡張
@@ -34,9 +35,11 @@
 
 ### インストール
 
+#### ローカル環境での使用
+
 1. このリポジトリをクローン:
 ```bash
-git clone https://github.com/YOUR_USERNAME/dotfiles.git ~/.dotfiles
+git clone https://github.com/masuwaka/dotfiles.git ~/.dotfiles
 ```
 
 2. 既存の設定ファイルをバックアップ:
@@ -54,10 +57,43 @@ ln -sf ~/.dotfiles/.zshrc ~/.zshrc
 source ~/.zshrc
 ```
 
+#### NFS共有環境での使用
+
+NFSマウントされたホームディレクトリで使用する場合：
+
+1. NFSマウントされた場所にリポジトリをクローン:
+```bash
+git clone https://github.com/masuwaka/dotfiles.git ~/shared/.dotfiles
+```
+
+2. 複数マシンでシンボリックリンクを作成:
+```bash
+ln -sf ~/shared/.dotfiles/.zshrc ~/.zshrc
+```
+
+3. NFS環境では自動的に軽量化モードが有効になり、以下が最適化されます:
+   - 履歴ファイルがローカル（`/tmp`）に配置
+   - 補完キャッシュがローカルに配置
+   - 重いプラグインが無効化
+   - ファイルロック問題を回避
+
+4. デバッグ情報を表示したい場合:
+```bash
+export DOTFILES_DEBUG=1
+source ~/.zshrc
+```
+
 ## ✨ 特徴
 
 ### 自動Node.js LTS使用
 NVMが自動的にNode.jsの最新LTSバージョンを使用します。
+
+### NFS環境対応
+自動的にNFS環境を検出し、以下の最適化を実行:
+- **キャッシュ最適化**: 補完キャッシュをローカル（/tmp）に配置
+- **履歴最適化**: 履歴ファイルをローカルに配置してI/O負荷軽減  
+- **プラグイン軽量化**: 重いプラグインを自動無効化
+- **ロック回避**: NFSでのファイルロック問題を回避
 
 ### モダンツール対応
 以下のツールが利用可能な場合、自動的に代替エイリアスを設定:

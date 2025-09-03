@@ -26,10 +26,12 @@ zplug "zplug/zplug", hook-build:'zplug --self-manage'
 # -----------------------------------------------------------------------------
 # 生産性向上プラグイン
 # -----------------------------------------------------------------------------
-# コマンド補助とヒント
-zplug "MichaelAquilina/zsh-you-should-use"     # 利用可能なエイリアスを提案
-zplug "zsh-users/zsh-history-substring-search" # 部分文字列による履歴検索
-zplug "djui/alias-tips"                        # エイリアスのヒントを表示
+# コマンド補助とヒント（NFS環境では軽量化）
+if [ "$DOTFILES_LIGHTWEIGHT_MODE" != "true" ]; then
+    zplug "MichaelAquilina/zsh-you-should-use" # 利用可能なエイリアスを提案
+    zplug "djui/alias-tips"                    # エイリアスのヒントを表示
+fi
+zplug "zsh-users/zsh-history-substring-search" # 部分文字列による履歴検索（常に有効）
 
 # -----------------------------------------------------------------------------
 # プラグインインストール確認
@@ -44,6 +46,41 @@ fi
 
 # 全プラグインの読み込み
 zplug load
+
+# =============================================================================
+# 環境検出とNFS対応
+# =============================================================================
+# NFS環境での利用を検出し、パフォーマンスを最適化
+DOTFILES_ON_NFS=false
+if [ -n "$HOME" ] && command -v stat &> /dev/null; then
+    # NFSマウントされたディレクトリかチェック
+    if stat -f -c %T "$HOME" 2>/dev/null | grep -q nfs || \
+       df -T "$HOME" 2>/dev/null | grep -q nfs; then
+        DOTFILES_ON_NFS=true
+    fi
+fi
+
+# NFS環境での最適化設定
+if [ "$DOTFILES_ON_NFS" = true ]; then
+    # 補完キャッシュをローカルの/tmpに配置
+    export ZSH_CACHE_DIR="/tmp/.zsh-cache-$USER"
+    mkdir -p "$ZSH_CACHE_DIR"
+    
+    # 履歴ファイルもローカルに配置
+    export HISTFILE="/tmp/.zsh-history-$USER"
+    
+    # NFSでのファイルロック問題を回避
+    setopt NO_HIST_FCNTL_LOCK
+    
+    # プラグイン読み込みを軽量化（重いプラグインをスキップ）
+    export DOTFILES_LIGHTWEIGHT_MODE=true
+else
+    # ローカル環境での通常設定
+    export ZSH_CACHE_DIR="$HOME/.zsh/cache"
+    mkdir -p "$ZSH_CACHE_DIR"
+    export HISTFILE="$HOME/.zsh-history"
+    export DOTFILES_LIGHTWEIGHT_MODE=false
+fi
 
 # =============================================================================
 # 基本シェルオプション
@@ -67,8 +104,7 @@ alias dirs='dirs -v'     # 番号付きでディレクトリスタックを表�
 # =============================================================================
 # 履歴設定
 # =============================================================================
-# 履歴ファイルとサイズ設定
-HISTFILE=$HOME/.zsh-history
+# 履歴ファイルとサイズ設定（環境検出で既に設定済み）
 HISTSIZE=100000          # メモリに保持するコマンド数
 SAVEHIST=100000          # ファイルに保存するコマンド数
 
@@ -92,7 +128,7 @@ compinit
 zstyle ':completion:*' menu select                           # 補完でメニュー選択
 zstyle ':completion:*' matcher-list 'm:{a-z}={A-Z}'         # 大文字小文字を無視
 zstyle ':completion:*' use-cache true                       # 補完キャッシュを使用
-zstyle ':completion:*' cache-path ~/.zsh/cache              # キャッシュディレクトリ
+zstyle ':completion:*' cache-path "$ZSH_CACHE_DIR"          # キャッシュディレクトリ（環境に応じて設定）
 
 # =============================================================================
 # カラー設定
@@ -303,3 +339,10 @@ export PATH="$PATH:$HOME/.local/bin"
 # =============================================================================
 # 設定終了
 # =============================================================================
+
+# NFS環境での動作状況を表示（デバッグ用）
+if [ "$DOTFILES_ON_NFS" = true ] && [ -n "$DOTFILES_DEBUG" ]; then
+    echo "🔧 NFS環境で動作中 - 軽量化モード有効"
+    echo "   履歴ファイル: $HISTFILE"
+    echo "   キャッシュディレクトリ: $ZSH_CACHE_DIR"
+fi
