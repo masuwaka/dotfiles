@@ -124,8 +124,7 @@ install_zplug() {
     # リポジトリ内にインストールしてシンボリックリンク作成
     if [ ! -d "$TOOLS_DIR/zplug" ]; then
         log_info "Zplugをインストール中..."
-        export ZPLUG_HOME="$TOOLS_DIR/zplug"
-        curl -sL --proto-redir -all,https https://raw.githubusercontent.com/zplug/installer/master/installer.zsh | zsh
+        git clone https://github.com/zplug/zplug "$TOOLS_DIR/zplug"
         log_success "Zplugのインストール完了"
     fi
     

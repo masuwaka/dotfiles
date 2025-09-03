@@ -18,33 +18,26 @@ Zsh設定ファイルと自動セットアップスクリプト
 - sudo権限
 - インターネット接続
 
-### 自動セットアップ
+### 手順
 
 ```bash
+# 1. リポジトリをクローン
 git clone https://github.com/masuwaka/dotfiles.git ~/.dotfiles
 cd ~/.dotfiles
-./setup.sh
-```
 
-セットアップスクリプトが以下を自動実行:
-- 必要なパッケージのインストール
-- Zplug、FZF、開発ツール（pyenv、nvm、rbenv）のインストール
-- モダンツール（lsd、bat、ripgrep、zoxide）の最新版インストール
-- .zshrcのシンボリックリンク作成
-
-### セットアップ手順
-
-どの環境でも同じ手順で実行:
-
-```bash
-# 初回セットアップ
+# 2. 自動セットアップ実行
 ./setup.sh
 
-# 各マシンで初回のみ実行
+# 3. 開発環境の初期化（各マシンで初回のみ）
 pyenv install 3.11.0 && pyenv global 3.11.0
 nvm install --lts
 rbenv install 3.2.0 && rbenv global 3.2.0
 ```
+
+自動でインストールされるもの:
+- システムパッケージ、Zplug、FZF、開発ツール（pyenv、nvm、rbenv）
+- モダンツール（lsd、bat、ripgrep、zoxide）
+- 全てのシンボリックリンク
 
 ## ✨ 特徴
 

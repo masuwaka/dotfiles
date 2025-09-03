@@ -111,7 +111,7 @@ update_plugins() {
     if [ -d "$HOME/.zplug" ]; then
         log_info "Zplugを更新中..."
         cd "$HOME/.zplug"
-        git pull origin master
+        git pull origin main
         log_success "Zplug更新完了"
     fi
     
@@ -119,7 +119,7 @@ update_plugins() {
     if [ -d "$HOME/.fzf" ]; then
         log_info "FZFを更新中..."
         cd "$HOME/.fzf"
-        git pull origin master
+        git pull origin main
         ./install --bin
         log_success "FZF更新完了"
     fi
@@ -140,7 +140,7 @@ update_dev_tools() {
     if [ -d "$HOME/.pyenv" ]; then
         log_info "pyenvを更新中..."
         cd "$HOME/.pyenv"
-        git pull origin master
+        git pull origin main
         log_success "pyenv更新完了"
     fi
     
@@ -158,12 +158,12 @@ update_dev_tools() {
     if [ -d "$HOME/.rbenv" ]; then
         log_info "rbenvを更新中..."
         cd "$HOME/.rbenv"
-        git pull origin master
+        git pull origin main
         
         # ruby-build
         if [ -d "$HOME/.rbenv/plugins/ruby-build" ]; then
             cd "$HOME/.rbenv/plugins/ruby-build"
-            git pull origin master
+            git pull origin main
         fi
         log_success "rbenv更新完了"
     fi
@@ -245,7 +245,7 @@ main() {
     log_info "Dotfilesリポジトリを更新中..."
     SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
     cd "$SCRIPT_DIR"
-    git pull origin master
+    git pull origin main
     log_success "Dotfilesリポジトリ更新完了"
     
     if [ "$UPDATE_PLUGINS" = true ]; then
