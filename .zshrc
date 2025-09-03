@@ -264,6 +264,58 @@ fi
 export PATH="$PATH:$HOME/.local/bin"
 
 # =============================================================================
+# 自動更新チェック
+# =============================================================================
+# 更新チェックを1日1回に制限
+DOTFILES_UPDATE_CHECK_FILE="$HOME/.dotfiles-last-update-check"
+DOTFILES_DIR="$HOME/.dotfiles"
+
+if [ -d "$DOTFILES_DIR" ] && [ -f "$DOTFILES_DIR/update.sh" ]; then
+    should_check_update=false
+    
+    if [ ! -f "$DOTFILES_UPDATE_CHECK_FILE" ]; then
+        should_check_update=true
+    else
+        # 最後のチェックから24時間経過しているか確認
+        last_check=$(stat -c %Y "$DOTFILES_UPDATE_CHECK_FILE" 2>/dev/null || stat -f %m "$DOTFILES_UPDATE_CHECK_FILE" 2>/dev/null || echo 0)
+        current_time=$(date +%s)
+        time_diff=$((current_time - last_check))
+        
+        if [ $time_diff -gt 86400 ]; then
+            should_check_update=true
+        fi
+    fi
+    
+    if [ "$should_check_update" = true ]; then
+        # バックグラウンドで更新チェック
+        (
+            cd "$DOTFILES_DIR" 2>/dev/null || exit 0
+            
+            # リモートの更新を確認
+            git fetch --quiet 2>/dev/null
+            LOCAL=$(git rev-parse @ 2>/dev/null)
+            REMOTE=$(git rev-parse @{u} 2>/dev/null)
+            
+            if [ "$LOCAL" != "$REMOTE" ] && [ -n "$REMOTE" ]; then
+                echo ""
+                echo "📦 Dotfiles の更新が利用可能です！"
+                echo "更新を実行しますか？ [Y/n]"
+                read -r response
+                if [[ ! "$response" =~ ^[Nn]$ ]]; then
+                    cd "$DOTFILES_DIR"
+                    git pull
+                    ./update.sh --all
+                    echo "✅ 更新が完了しました。新しいシェルを開いて変更を反映してください。"
+                fi
+            fi
+            
+            # 最終チェック時刻を更新
+            touch "$DOTFILES_UPDATE_CHECK_FILE"
+        ) &
+    fi
+fi
+
+# =============================================================================
 # デバッグ情報（必要時のみ）
 # =============================================================================
 if [ "$DOTFILES_ON_NFS" = true ] && [ -n "$DOTFILES_DEBUG" ]; then

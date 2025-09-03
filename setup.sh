@@ -302,11 +302,6 @@ install_local_dev_tools() {
     if [ ! -d "$HOME/.pyenv" ]; then
         log_info "pyenvをgit cloneでインストール中..."
         git clone https://github.com/pyenv/pyenv.git ~/.pyenv
-        
-        # pyenv-update plugin
-        log_info "pyenv-updateプラグインをインストール中..."
-        git clone https://github.com/pyenv/pyenv-update.git ~/.pyenv/plugins/pyenv-update
-        
         log_success "pyenv インストール完了"
     else
         log_info "pyenvは既にインストール済み"

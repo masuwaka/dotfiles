@@ -136,16 +136,11 @@ update_plugins() {
 update_dev_tools() {
     log_info "開発ツールを更新中..."
     
-    # pyenv-update
+    # pyenv
     if [ -d "$HOME/.pyenv" ]; then
         log_info "pyenvを更新中..."
-        if [ -d "$HOME/.pyenv/plugins/pyenv-update" ]; then
-            cd "$HOME/.pyenv"
-            pyenv update
-        else
-            cd "$HOME/.pyenv"
-            git pull origin master
-        fi
+        cd "$HOME/.pyenv"
+        git pull origin master
         log_success "pyenv更新完了"
     fi
     

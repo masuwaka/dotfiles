@@ -4,9 +4,9 @@ Zsh設定ファイルと自動セットアップスクリプト
 
 ## 📁 構成
 
-- `.zshrc` - Zsh設定ファイル（NFS環境自動検出対応）
+- `.zshrc` - Zsh設定ファイル（NFS環境自動検出・自動更新機能付き）
 - `setup.sh` - 自動セットアップスクリプト（Ubuntu 24.04+）
-- `update.sh` - アップデートスクリプト（GitHubモジュール更新）
+- `update.sh` - 内部更新スクリプト（自動実行）
 
 ## 🚀 セットアップ
 
@@ -55,7 +55,7 @@ rbenv install 3.2.0 && rbenv global 3.2.0
 - ファイルロック問題の回避
 
 ### 開発環境
-- **Python**: pyenv + pyenv-update
+- **Python**: pyenv（git管理）
 - **Node.js**: nvm（LTS自動使用）
 - **Ruby**: rbenv + ruby-build
 - **CUDA**: 自動PATH設定
@@ -72,22 +72,16 @@ rbenv install 3.2.0 && rbenv global 3.2.0
 - zsh-syntax-highlighting - シンタックスハイライト
 - zsh-history-substring-search - 部分文字列検索
 
-## 🔄 アップデート
+## 🔄 自動更新
 
-### 全体更新（推奨）
+シェル起動時に1日1回自動で更新をチェックし、利用可能な場合は確認プロンプトを表示します。
+
+手動で更新する場合：
 ```bash
 cd ~/.dotfiles
 git pull
-./update.sh
+./update.sh --all
 ```
-
-### 個別更新
-```bash
-./update.sh --plugins  # Zshプラグインのみ
-./update.sh --tools    # 開発ツールのみ
-```
-
-セットアップ済み環境では `./setup.sh` を再実行すると自動的に更新モードになります。
 
 ## 🔧 カスタマイズ
 
