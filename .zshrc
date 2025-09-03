@@ -360,6 +360,18 @@ export PATH="$PATH:$HOME/.local/bin"
 # 設定終了
 # =============================================================================
 
+# セットアップスクリプトとの統合
+# =============================================================================
+# 初回セットアップの確認（オプション）
+if [ -n "$DOTFILES_SUGGEST_SETUP" ] && [ ! -f "$HOME/.dotfiles-setup-completed" ]; then
+    echo "🚀 初回セットアップが推奨されます。以下のコマンドを実行してください:"
+    echo "   ~/.dotfiles/setup.sh"
+    echo ""
+    echo "このメッセージを今後表示しない場合:"
+    echo "   touch ~/.dotfiles-setup-completed"
+    echo ""
+fi
+
 # NFS環境での動作状況を表示（デバッグ用）
 if [ "$DOTFILES_ON_NFS" = true ] && [ -n "$DOTFILES_DEBUG" ]; then
     echo "🔧 NFS環境で動作中 - 軽量化モード有効"

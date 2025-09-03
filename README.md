@@ -28,14 +28,39 @@
 ## 🚀 セットアップ
 
 ### 前提条件
-- Zsh
-- Git
-- [Zplug](https://github.com/zplug/zplug) (プラグイン管理)
-- [FZF](https://github.com/junegunn/fzf) (ファジーファインダー)
+- Ubuntu 18.04+ 
+- sudo権限
+- インターネット接続
+
+**注意**: セットアップスクリプトが必要なツールを自動インストールするため、事前準備は不要です。
 
 ### インストール
 
-#### ローカル環境での使用
+#### 🚀 自動セットアップ（推奨）
+
+1. このリポジトリをクローン:
+```bash
+git clone https://github.com/masuwaka/dotfiles.git ~/.dotfiles
+cd ~/.dotfiles
+```
+
+2. セットアップスクリプトを実行:
+```bash
+./setup.sh
+```
+
+**セットアップスクリプトが実行する内容:**
+- 必要なシステムパッケージのインストール
+- Zplug（プラグインマネージャー）のインストール
+- FZF（ファジーファインダー）のインストール
+- 開発ツール（pyenv, nvm, rbenv）のインストール
+- モダンツール（lsd, bat, ripgrep, zoxide）の最新版自動インストール
+- .zshrcのシンボリックリンク作成
+- デフォルトシェルのzshへの変更
+
+#### 手動インストール
+
+手動でセットアップする場合:
 
 1. このリポジトリをクローン:
 ```bash
@@ -59,16 +84,25 @@ source ~/.zshrc
 
 #### NFS共有環境での使用
 
-NFSマウントされたホームディレクトリで使用する場合：
+NFSマウントされたホームディレクトリで開発ツールも共有する場合：
 
-1. NFSマウントされた場所にリポジトリをクローン:
+1. 共有領域にリポジトリと開発ツールをセットアップ:
 ```bash
+# 共有領域にクローン
 git clone https://github.com/masuwaka/dotfiles.git ~/shared/.dotfiles
+
+# 開発ツール用ディレクトリを作成
+mkdir -p ~/shared/devtools
+
+# 初回マシンで開発ツールをインストール
+cd ~/shared/.dotfiles
+./setup.sh --nfs-shared-tools ~/shared/devtools
 ```
 
-2. 複数マシンでシンボリックリンクを作成:
+2. 他のマシンでは既存の開発ツールにリンク:
 ```bash
-ln -sf ~/shared/.dotfiles/.zshrc ~/.zshrc
+cd ~/shared/.dotfiles  
+./setup.sh --nfs-shared-tools ~/shared/devtools
 ```
 
 3. NFS環境では自動的に軽量化モードが有効になり、以下が最適化されます:
@@ -82,6 +116,20 @@ ln -sf ~/shared/.dotfiles/.zshrc ~/.zshrc
    2. `/tmp/$USER-zsh` (権限700で作成)
    3. `/var/tmp/$USER-zsh` (フォールバック)
    4. `$HOME/.zsh-local-cache` (最終フォールバック)
+
+3. **重要**: 初回は各マシンで開発ツールのバージョンをインストール:
+```bash
+# Python
+pyenv install 3.11.0
+pyenv global 3.11.0
+
+# Node.js (LTS自動使用)
+nvm install --lts
+
+# Ruby  
+rbenv install 3.2.0
+rbenv global 3.2.0
+```
 
 4. デバッグ情報を表示したい場合:
 ```bash
