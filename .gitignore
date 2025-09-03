@@ -1,6 +1,8 @@
-# 環境固有の設定ファイル
+# マシン固有の設定ファイル（git管理対象外）
 .zshrc.local
-.zshrc.internal
+
+# 組織固有設定（フォーク先で管理する場合はコメントアウト）
+# .zshrc.custom
 
 # セットアップ関連のマーカーファイル
 .dotfiles-setup-completed

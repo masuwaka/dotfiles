@@ -5,10 +5,11 @@ Zsh設定ファイルと自動セットアップスクリプト
 ## 📁 構成
 
 - `.zshrc` - Zsh設定ファイル（NFS環境自動検出・自動更新機能付き）
-- `.zshrc.local.example` - 環境固有設定のテンプレート
+- `.zshrc.custom.example` - 組織・チーム共通設定のテンプレート
+- `.zshrc.local.example` - マシン固有設定のテンプレート
 - `setup.sh` - 自動セットアップスクリプト（Ubuntu 24.04+）
 - `update.sh` - 内部更新スクリプト（自動実行）
-- `.gitignore` - ローカル設定ファイルを除外
+- `.gitignore` - 設定ファイルの管理方針
 
 ## 🚀 セットアップ
 
@@ -87,28 +88,51 @@ git pull
 
 ## 🔧 カスタマイズ
 
-### 環境固有設定
-環境固有の設定（プロキシ、内部ツール、認証情報など）は `.zshrc.local` に記述：
+### 設定の階層化
 
+3段階の設定階層で柔軟な管理が可能：
+
+#### 1. 組織・チーム共通設定（GitLab等で管理）
 ```bash
-cp ~/.dotfiles/.zshrc.local.example ~/.zshrc.local
-vim ~/.zshrc.local  # 必要な設定を追加
+cp ~/.dotfiles/.zshrc.custom.example ~/.zshrc.custom
+vim ~/.zshrc.custom  # プロキシ、内部ツール等
 ```
 
-`.zshrc.local` は git で管理されないため、機密情報も安全に記述できます。
+#### 2. マシン固有設定（git管理対象外）
+```bash
+cp ~/.dotfiles/.zshrc.local.example ~/.zshrc.local
+vim ~/.zshrc.local  # マシンごとの個別設定
+```
 
-### フォークして独自リポジトリで管理する場合
+#### 読み込み順序
+1. `.zshrc`（基本設定）
+2. `.zshrc.custom`（組織共通、GitLab管理可能）
+3. `.zshrc.local`（マシン固有、git除外）
+
+### フォークして組織リポジトリで管理する場合
 
 ```bash
 # 1. GitLab等でフォーク後、originを変更
-git remote set-url origin https://gitlab.example.com/yourname/dotfiles.git
+git remote set-url origin https://gitlab.internal/yourorg/dotfiles.git
 
 # 2. 元のリポジトリをupstreamとして追加
 git remote add upstream https://github.com/masuwaka/dotfiles.git
 
-# 3. 元のリポジトリの更新を取り込む
+# 3. .zshrc.custom を組織用に設定
+cp .zshrc.custom.example .zshrc.custom
+# 組織共通設定を記述
+
+# 4. .gitignore を調整（.zshrc.custom をgit管理対象に）
+vim .gitignore  # .zshrc.customの行をコメントアウト
+
+# 5. コミットしてpush
+git add .zshrc.custom .gitignore
+git commit -m "Add organization-specific settings"
+git push origin master
+
+# 6. upstream更新の取り込み
 git fetch upstream
-git merge upstream/master  # または rebase
+git merge upstream/master
 git push origin master
 ```
 

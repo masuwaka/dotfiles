@@ -1,9 +1,9 @@
 #!/usr/bin/env zsh
 # =============================================================================
-# マシン固有設定ファイル（テンプレート）
+# 組織・チーム共通設定ファイル（テンプレート）
 # =============================================================================
-# このファイルを ~/.zshrc.local にコピーして、マシン固有の設定を記述してください
-# .zshrc.local は .gitignore に含まれるため、リポジトリには含まれません
+# このファイルを .zshrc.custom にリネームして使用してください
+# GitLab等のプライベートリポジトリで管理可能です
 # =============================================================================
 
 # -----------------------------------------------------------------------------
@@ -14,61 +14,57 @@
 # export no_proxy="localhost,127.0.0.1,.example.com"
 
 # -----------------------------------------------------------------------------
-# 環境固有のパス設定
+# 組織共通のパス設定
 # -----------------------------------------------------------------------------
-# export PATH="/opt/custom/bin:$PATH"
-# export LD_LIBRARY_PATH="/opt/custom/lib:$LD_LIBRARY_PATH"
+# export PATH="/opt/tools/bin:$PATH"
+# export LD_LIBRARY_PATH="/opt/tools/lib:$LD_LIBRARY_PATH"
 
 # -----------------------------------------------------------------------------
-# 認証情報（例: GitLab, Artifactory, Docker Registry）
+# 内部サービスの設定
 # -----------------------------------------------------------------------------
-# export GITLAB_TOKEN="your-token-here"
-# export ARTIFACTORY_USER="username"
-# export ARTIFACTORY_PASSWORD="password"
+# export GITLAB_HOST="gitlab.example.com"
+# export ARTIFACTORY_URL="https://artifactory.example.com"
 # export DOCKER_REGISTRY="registry.example.com"
+# export INTERNAL_PKG_REPO="https://packages.example.com"
 
 # -----------------------------------------------------------------------------
-# 環境固有のエイリアス
+# 組織共通のエイリアス
 # -----------------------------------------------------------------------------
-# alias vpn-connect='sudo openvpn /path/to/config.ovpn'
-# alias internal-tool='/opt/internal/tool/bin/tool'
+# alias build-tool='/opt/build-tool/bin/build'
+# alias deploy='python /opt/deploy-scripts/deploy.py'
+# alias vpn-status='systemctl status openvpn'
 
 # -----------------------------------------------------------------------------
-# 環境固有の環境変数
+# 組織共通の環境変数
 # -----------------------------------------------------------------------------
-# export ENVIRONMENT="development"
-# export LOG_LEVEL="debug"
-# export CUSTOM_CONFIG="/etc/custom/config.yaml"
+# export ORGANIZATION="example-corp"
+# export DEFAULT_REGION="ap-northeast-1"
+# export LOG_LEVEL="info"
 
 # -----------------------------------------------------------------------------
-# Git設定の上書き（特定環境用）
+# Git設定（組織用）
 # -----------------------------------------------------------------------------
-# git config --global http.sslVerify false  # 内部CA証明書環境用
-# git config --global user.email "user@example.com"
+# git config --global url."https://gitlab.example.com/".insteadOf "git@gitlab.example.com:"
 
 # -----------------------------------------------------------------------------
-# 追加の開発ツール設定
+# 開発ツールの共通設定
 # -----------------------------------------------------------------------------
-# export JAVA_HOME="/usr/lib/jvm/java-11-openjdk"
 # export MAVEN_OPTS="-Xmx2048m"
 # export GRADLE_USER_HOME="$HOME/.gradle"
+# export NPM_REGISTRY="https://npm.example.com"
 
 # -----------------------------------------------------------------------------
-# 関数定義（環境固有）
+# 関数定義（組織共通）
 # -----------------------------------------------------------------------------
-# function sync-upstream() {
-#     # upstreamリポジトリから最新を取得
-#     git fetch upstream
-#     git checkout main
-#     git merge upstream/main
-#     git push origin main
+# function internal-login() {
+#     # 内部システムへのログイン処理
+#     echo "Logging in to internal systems..."
+#     # 実際のログイン処理
 # }
 
 # -----------------------------------------------------------------------------
-# 条件付き設定（ネットワーク環境による切り替え）
+# チーム固有の設定をさらに読み込む場合
 # -----------------------------------------------------------------------------
-# if ping -c 1 internal.server.com &> /dev/null; then
-#     # 内部ネットワーク環境での設定
-#     export INTERNAL_NETWORK=true
-#     source ~/.zshrc.internal
+# if [ -f "$HOME/.zshrc.team" ]; then
+#     source "$HOME/.zshrc.team"
 # fi
