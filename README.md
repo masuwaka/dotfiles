@@ -6,6 +6,7 @@ Zsh設定ファイルと自動セットアップスクリプト
 
 - `.zshrc` - Zsh設定ファイル（NFS環境自動検出対応）
 - `setup.sh` - 自動セットアップスクリプト（Ubuntu 24.04+）
+- `update.sh` - アップデートスクリプト（GitHubモジュール更新）
 
 ## 🚀 セットアップ
 
@@ -70,6 +71,23 @@ rbenv install 3.2.0 && rbenv global 3.2.0
 - zsh-autosuggestions - 自動提案
 - zsh-syntax-highlighting - シンタックスハイライト
 - zsh-history-substring-search - 部分文字列検索
+
+## 🔄 アップデート
+
+### 全体更新（推奨）
+```bash
+cd ~/.dotfiles
+git pull
+./update.sh
+```
+
+### 個別更新
+```bash
+./update.sh --plugins  # Zshプラグインのみ
+./update.sh --tools    # 開発ツールのみ
+```
+
+セットアップ済み環境では `./setup.sh` を再実行すると自動的に更新モードになります。
 
 ## 🔧 カスタマイズ
 

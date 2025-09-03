@@ -142,8 +142,6 @@ if command -v rg &> /dev/null; then
     alias grep='rg'
 fi
 
-# Claude CLI
-alias claude="~/.claude/local/claude"
 
 # =============================================================================
 # プロンプト設定

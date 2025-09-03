@@ -438,12 +438,27 @@ main() {
         log_info "NFS共有ツールパス: $NFS_SHARED_TOOLS"
     fi
     
-    # 実行前確認
-    log_info "セットアップを開始しますか？ [Y/n]"
-    read -r response
-    if [[ "$response" =~ ^[Nn]$ ]]; then
-        log_info "セットアップをキャンセルしました"
-        exit 0
+    # 既存インストールの確認と更新モード
+    if [ -f "$HOME/.dotfiles-setup-completed" ]; then
+        log_info "既存のセットアップを検出しました。更新を実行しますか？ [Y/n]"
+        read -r response
+        if [[ "$response" =~ ^[Nn]$ ]]; then
+            log_info "更新をキャンセルしました"
+            exit 0
+        fi
+        log_info "更新モードで実行します..."
+        # update.shを呼び出し
+        if [ -f "$SCRIPT_DIR/update.sh" ]; then
+            exec "$SCRIPT_DIR/update.sh" --all
+        fi
+    else
+        # 実行前確認
+        log_info "セットアップを開始しますか？ [Y/n]"
+        read -r response
+        if [[ "$response" =~ ^[Nn]$ ]]; then
+            log_info "セットアップをキャンセルしました"
+            exit 0
+        fi
     fi
     
     install_system_packages
@@ -453,6 +468,9 @@ main() {
     install_modern_tools
     setup_zshrc
     change_default_shell
+    
+    # セットアップ完了マーカーファイルを作成
+    touch "$HOME/.dotfiles-setup-completed"
     
     log_success "🎉 セットアップが完了しました！"
     log_info "新しいシェルを開くか、以下のコマンドを実行してください:"
