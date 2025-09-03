@@ -2,8 +2,8 @@
 # =============================================================================
 # Dotfiles セットアップスクリプト (Ubuntu専用)
 # =============================================================================
-# 説明: 必要なツールの自動インストールとNFS環境対応
-# 使用方法: ./setup.sh [--nfs-shared-tools /path/to/shared]
+# 説明: 必要なツールを自動でリポジトリ内にインストール・シンボリックリンク作成
+# 使用方法: ./setup.sh [オプション]
 # =============================================================================
 
 set -e
@@ -34,7 +34,7 @@ log_error() {
 
 # 変数初期化
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-NFS_SHARED_TOOLS=""
+TOOLS_DIR="$SCRIPT_DIR/tools"
 INSTALL_ZPLUG=true
 INSTALL_FZF=true
 INSTALL_DEV_TOOLS=true
@@ -53,10 +53,6 @@ fi
 # コマンドライン引数の解析
 while [[ $# -gt 0 ]]; do
     case $1 in
-        --nfs)
-            NFS_SHARED_TOOLS="$SCRIPT_DIR/tools"
-            shift
-            ;;
         --skip-zplug)
             INSTALL_ZPLUG=false
             shift
@@ -72,7 +68,6 @@ while [[ $# -gt 0 ]]; do
         -h|--help)
             echo "使用方法: $0 [オプション]"
             echo "オプション:"
-            echo "  --nfs                   NFS環境で開発ツールをリポジトリ内に配置"
             echo "  --skip-zplug            Zplugのインストールをスキップ"
             echo "  --skip-fzf              FZFのインストールをスキップ"
             echo "  --skip-dev-tools        開発ツールのインストール/リンクをスキップ"
@@ -126,34 +121,23 @@ install_zplug() {
         return
     fi
     
-    # NFS環境ではシンボリックリンク
-    if [ -n "$NFS_SHARED_TOOLS" ] && [ -d "$NFS_SHARED_TOOLS/zplug" ]; then
-        if [ -L "$HOME/.zplug" ]; then
-            rm "$HOME/.zplug"
-        elif [ -d "$HOME/.zplug" ]; then
-            mv "$HOME/.zplug" "$HOME/.zplug.backup.$(date +%Y%m%d_%H%M%S)"
-        fi
-        ln -sf "$NFS_SHARED_TOOLS/zplug" "$HOME/.zplug"
-        log_success "Zplug シンボリックリンク作成完了"
-        return
+    # リポジトリ内にインストールしてシンボリックリンク作成
+    if [ ! -d "$TOOLS_DIR/zplug" ]; then
+        log_info "Zplugをインストール中..."
+        export ZPLUG_HOME="$TOOLS_DIR/zplug"
+        curl -sL --proto-redir -all,https https://raw.githubusercontent.com/zplug/installer/master/installer.zsh | zsh
+        log_success "Zplugのインストール完了"
     fi
     
-    # ローカルインストール
-    if [ -d "$HOME/.zplug" ]; then
-        log_info "Zplugは既にインストール済み"
-        return
+    # シンボリックリンクの作成
+    if [ -L "$HOME/.zplug" ]; then
+        rm "$HOME/.zplug"
+    elif [ -d "$HOME/.zplug" ]; then
+        log_warning "既存の ~/.zplug をバックアップ中..."
+        mv "$HOME/.zplug" "$HOME/.zplug.backup.$(date +%Y%m%d_%H%M%S)"
     fi
-    
-    log_info "Zplugをインストール中..."
-    if [ -n "$NFS_SHARED_TOOLS" ]; then
-        # NFS環境では共有ディレクトリにインストール
-        export ZPLUG_HOME="$NFS_SHARED_TOOLS/zplug"
-        curl -sL --proto-redir -all,https https://raw.githubusercontent.com/zplug/installer/master/installer.zsh | zsh
-        ln -sf "$NFS_SHARED_TOOLS/zplug" "$HOME/.zplug"
-    else
-        curl -sL --proto-redir -all,https https://raw.githubusercontent.com/zplug/installer/master/installer.zsh | zsh
-    fi
-    log_success "Zplugのインストール完了"
+    ln -sf "$TOOLS_DIR/zplug" "$HOME/.zplug"
+    log_success "Zplug シンボリックリンク作成完了"
 }
 
 # FZFのインストール
@@ -163,174 +147,91 @@ install_fzf() {
         return
     fi
     
-    # NFS環境ではシンボリックリンク
-    if [ -n "$NFS_SHARED_TOOLS" ] && [ -d "$NFS_SHARED_TOOLS/fzf" ]; then
-        if [ -L "$HOME/.fzf" ]; then
-            rm "$HOME/.fzf"
-        elif [ -d "$HOME/.fzf" ]; then
-            mv "$HOME/.fzf" "$HOME/.fzf.backup.$(date +%Y%m%d_%H%M%S)"
-        fi
-        ln -sf "$NFS_SHARED_TOOLS/fzf" "$HOME/.fzf"
-        log_success "FZF シンボリックリンク作成完了"
-        return
+    # リポジトリ内にインストールしてシンボリックリンク作成
+    if [ ! -d "$TOOLS_DIR/fzf" ]; then
+        log_info "FZFをインストール中..."
+        git clone --depth 1 https://github.com/junegunn/fzf.git "$TOOLS_DIR/fzf"
+        "$TOOLS_DIR/fzf/install" --all --no-bash --no-fish
+        log_success "FZFのインストール完了"
     fi
     
-    if command -v fzf &> /dev/null; then
-        log_info "FZFは既にインストール済み"
-        return
+    # シンボリックリンクの作成
+    if [ -L "$HOME/.fzf" ]; then
+        rm "$HOME/.fzf"
+    elif [ -d "$HOME/.fzf" ]; then
+        log_warning "既存の ~/.fzf をバックアップ中..."
+        mv "$HOME/.fzf" "$HOME/.fzf.backup.$(date +%Y%m%d_%H%M%S)"
     fi
-    
-    log_info "FZFをインストール中..."
-    local fzf_dir="$HOME/.fzf"
-    if [ -n "$NFS_SHARED_TOOLS" ]; then
-        fzf_dir="$NFS_SHARED_TOOLS/fzf"
-    fi
-    
-    if [ -d "$fzf_dir" ]; then
-        rm -rf "$fzf_dir"
-    fi
-    
-    git clone --depth 1 https://github.com/junegunn/fzf.git "$fzf_dir"
-    "$fzf_dir/install" --all --no-bash --no-fish
-    
-    if [ -n "$NFS_SHARED_TOOLS" ]; then
-        ln -sf "$NFS_SHARED_TOOLS/fzf" "$HOME/.fzf"
-    fi
-    
-    log_success "FZFのインストール完了"
+    ln -sf "$TOOLS_DIR/fzf" "$HOME/.fzf"
+    log_success "FZF シンボリックリンク作成完了"
 }
 
-# 開発ツールのセットアップ（NFS共有またはローカルインストール）
+# 開発ツールのセットアップ（リポジトリ内に統一配置）
 setup_dev_tools() {
     if [ "$INSTALL_DEV_TOOLS" = false ]; then
         log_info "開発ツールのセットアップをスキップ"
         return
     fi
     
-    if [ -n "$NFS_SHARED_TOOLS" ]; then
-        setup_nfs_shared_tools
-    else
-        install_local_dev_tools
-    fi
+    log_info "開発ツールをリポジトリ内にセットアップ中..."
+    mkdir -p "$TOOLS_DIR"
+    
+    install_dev_tools_to_repo
 }
 
-# NFS共有開発ツールのシンボリックリンクセットアップ
-setup_nfs_shared_tools() {
-    log_info "NFS共有開発ツールのシンボリックリンクをセットアップ中..."
-    
-    if [ ! -d "$NFS_SHARED_TOOLS" ]; then
-        log_error "NFS共有ツールディレクトリが存在しません: $NFS_SHARED_TOOLS"
-        return
-    fi
-    
-    # pyenv
-    if [ -d "$NFS_SHARED_TOOLS/pyenv" ]; then
-        if [ -L "$HOME/.pyenv" ]; then
-            rm "$HOME/.pyenv"
-        elif [ -d "$HOME/.pyenv" ]; then
-            log_warning "既存の ~/.pyenv をバックアップ中..."
-            mv "$HOME/.pyenv" "$HOME/.pyenv.backup.$(date +%Y%m%d_%H%M%S)"
+# 開発ツールをリポジトリ内にインストールしてシンボリックリンクを作成
+install_dev_tools_to_repo() {
+    # 既存ツールの処理を統一する関数
+    setup_tool_symlink() {
+        local tool_name="$1"
+        local target_dir="$TOOLS_DIR/$tool_name"
+        local home_link="$HOME/.$tool_name"
+        
+        if [ -d "$target_dir" ]; then
+            if [ -L "$home_link" ]; then
+                rm "$home_link"
+            elif [ -d "$home_link" ]; then
+                log_warning "既存の ~/.$tool_name をバックアップ中..."
+                mv "$home_link" "$home_link.backup.$(date +%Y%m%d_%H%M%S)"
+            fi
+            ln -sf "$target_dir" "$home_link"
+            log_success "$tool_name シンボリックリンク作成完了"
         fi
-        ln -sf "$NFS_SHARED_TOOLS/pyenv" "$HOME/.pyenv"
-        log_success "pyenv シンボリックリンク作成完了"
-    else
-        log_warning "$NFS_SHARED_TOOLS/pyenv が見つかりません"
-    fi
+    }
     
-    # nvm
-    if [ -d "$NFS_SHARED_TOOLS/nvm" ]; then
-        if [ -L "$HOME/.nvm" ]; then
-            rm "$HOME/.nvm"
-        elif [ -d "$HOME/.nvm" ]; then
-            log_warning "既存の ~/.nvm をバックアップ中..."
-            mv "$HOME/.nvm" "$HOME/.nvm.backup.$(date +%Y%m%d_%H%M%S)"
-        fi
-        ln -sf "$NFS_SHARED_TOOLS/nvm" "$HOME/.nvm"
-        log_success "nvm シンボリックリンク作成完了"
-    else
-        log_warning "$NFS_SHARED_TOOLS/nvm が見つかりません"
-    fi
-    
-    # rbenv
-    if [ -d "$NFS_SHARED_TOOLS/rbenv" ]; then
-        if [ -L "$HOME/.rbenv" ]; then
-            rm "$HOME/.rbenv"
-        elif [ -d "$HOME/.rbenv" ]; then
-            log_warning "既存の ~/.rbenv をバックアップ中..."
-            mv "$HOME/.rbenv" "$HOME/.rbenv.backup.$(date +%Y%m%d_%H%M%S)"
-        fi
-        ln -sf "$NFS_SHARED_TOOLS/rbenv" "$HOME/.rbenv"
-        log_success "rbenv シンボリックリンク作成完了"
-    else
-        log_warning "$NFS_SHARED_TOOLS/rbenv が見つかりません"
-    fi
-    
-    # Cargo/Rust
-    if [ -d "$NFS_SHARED_TOOLS/cargo" ]; then
-        if [ -L "$HOME/.cargo" ]; then
-            rm "$HOME/.cargo"
-        elif [ -d "$HOME/.cargo" ]; then
-            log_warning "既存の ~/.cargo をバックアップ中..."
-            mv "$HOME/.cargo" "$HOME/.cargo.backup.$(date +%Y%m%d_%H%M%S)"
-        fi
-        ln -sf "$NFS_SHARED_TOOLS/cargo" "$HOME/.cargo"
-        log_success "cargo シンボリックリンク作成完了"
-    else
-        log_warning "$NFS_SHARED_TOOLS/cargo が見つかりません"
-    fi
-    
-    # Rustup
-    if [ -d "$NFS_SHARED_TOOLS/rustup" ]; then
-        if [ -L "$HOME/.rustup" ]; then
-            rm "$HOME/.rustup"
-        elif [ -d "$HOME/.rustup" ]; then
-            log_warning "既存の ~/.rustup をバックアップ中..."
-            mv "$HOME/.rustup" "$HOME/.rustup.backup.$(date +%Y%m%d_%H%M%S)"
-        fi
-        ln -sf "$NFS_SHARED_TOOLS/rustup" "$HOME/.rustup"
-        log_success "rustup シンボリックリンク作成完了"
-    fi
-    
-    log_success "NFS共有開発ツールのセットアップ完了"
-}
-
-# ローカル開発ツールのインストール
-install_local_dev_tools() {
-    log_info "ローカル開発ツールをインストール中..."
-    
-    # pyenv
-    if [ ! -d "$HOME/.pyenv" ]; then
-        log_info "pyenvをgit cloneでインストール中..."
-        git clone https://github.com/pyenv/pyenv.git ~/.pyenv
+    # pyenv (git clone)
+    if [ ! -d "$TOOLS_DIR/pyenv" ]; then
+        log_info "pyenv をインストール中..."
+        git clone https://github.com/pyenv/pyenv.git "$TOOLS_DIR/pyenv"
+        (cd "$TOOLS_DIR/pyenv" && src/configure && make -C src)
         log_success "pyenv インストール完了"
-    else
-        log_info "pyenvは既にインストール済み"
     fi
+    setup_tool_symlink "pyenv"
     
     # nvm
-    if [ ! -d "$HOME/.nvm" ]; then
-        log_info "nvmをインストール中..."
+    if [ ! -d "$TOOLS_DIR/nvm" ]; then
+        log_info "nvm をインストール中..."
         local nvm_version=$(get_latest_release "nvm-sh/nvm")
         if [ -z "$nvm_version" ]; then
             nvm_version="v0.39.3"  # フォールバック
         fi
-        curl -o- "https://raw.githubusercontent.com/nvm-sh/nvm/$nvm_version/install.sh" | bash
+        git clone https://github.com/nvm-sh/nvm.git "$TOOLS_DIR/nvm"
+        (cd "$TOOLS_DIR/nvm" && git checkout "$nvm_version")
         log_success "nvm ($nvm_version) インストール完了"
-    else
-        log_info "nvmは既にインストール済み"
     fi
+    setup_tool_symlink "nvm"
     
     # rbenv
-    if [ ! -d "$HOME/.rbenv" ]; then
-        log_info "rbenvをgit cloneでインストール中..."
-        git clone https://github.com/rbenv/rbenv.git ~/.rbenv
-        git clone https://github.com/rbenv/ruby-build.git ~/.rbenv/plugins/ruby-build
+    if [ ! -d "$TOOLS_DIR/rbenv" ]; then
+        log_info "rbenv をインストール中..."
+        git clone https://github.com/rbenv/rbenv.git "$TOOLS_DIR/rbenv"
+        mkdir -p "$TOOLS_DIR/rbenv/plugins"
+        git clone https://github.com/rbenv/ruby-build.git "$TOOLS_DIR/rbenv/plugins/ruby-build"
         log_success "rbenv インストール完了"
-    else
-        log_info "rbenvは既にインストール済み"
     fi
+    setup_tool_symlink "rbenv"
     
-    log_success "ローカル開発ツールのインストール完了"
+    log_success "開発ツールのセットアップ完了"
 }
 
 # モダンツールのインストール（最新バージョンを自動取得）
@@ -472,16 +373,14 @@ main() {
     log_info "新しいシェルを開くか、以下のコマンドを実行してください:"
     log_info "exec zsh"
     
-    if [ -n "$NFS_SHARED_TOOLS" ]; then
-        log_info ""
-        log_info "📝 NFS環境のメモ:"
-        log_info "  • 開発ツールはリポジトリ内 ($NFS_SHARED_TOOLS) に配置されています"
-        log_info "  • 他のマシンでも同じセットアップを実行してください: ./setup.sh --nfs"
-        log_info "  • 初回のみ各ツールでバージョンをインストール:"
-        log_info "    - pyenv install 3.11.0 && pyenv global 3.11.0"
-        log_info "    - nvm install --lts"
-        log_info "    - rbenv install 3.2.0 && rbenv global 3.2.0"
-    fi
+    log_info ""
+    log_info "📝 セットアップメモ:"
+    log_info "  • 開発ツールはリポジトリ内 ($TOOLS_DIR) に配置されています"
+    log_info "  • 他のマシンでも同じセットアップを実行してください: ./setup.sh"
+    log_info "  • 初回のみ各ツールでバージョンをインストール:"
+    log_info "    - pyenv install 3.11.0 && pyenv global 3.11.0"
+    log_info "    - nvm install --lts"
+    log_info "    - rbenv install 3.2.0 && rbenv global 3.2.0"
 }
 
 # スクリプト実行
