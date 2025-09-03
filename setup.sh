@@ -39,10 +39,15 @@ INSTALL_ZPLUG=true
 INSTALL_FZF=true
 INSTALL_DEV_TOOLS=true
 
-# Ubuntu以外では実行しない
+# Ubuntu 24.04以降のみサポート
 if ! grep -q "Ubuntu" /etc/os-release 2>/dev/null; then
     log_error "このスクリプトはUbuntu専用です"
     exit 1
+fi
+
+UBUNTU_VERSION=$(lsb_release -rs 2>/dev/null)
+if [ "$(echo "$UBUNTU_VERSION < 24.04" | bc)" -eq 1 ] 2>/dev/null; then
+    log_warning "Ubuntu 24.04以降を推奨します (現在: $UBUNTU_VERSION)"
 fi
 
 # コマンドライン引数の解析
@@ -121,13 +126,33 @@ install_zplug() {
         return
     fi
     
+    # NFS環境ではシンボリックリンク
+    if [ -n "$NFS_SHARED_TOOLS" ] && [ -d "$NFS_SHARED_TOOLS/zplug" ]; then
+        if [ -L "$HOME/.zplug" ]; then
+            rm "$HOME/.zplug"
+        elif [ -d "$HOME/.zplug" ]; then
+            mv "$HOME/.zplug" "$HOME/.zplug.backup.$(date +%Y%m%d_%H%M%S)"
+        fi
+        ln -sf "$NFS_SHARED_TOOLS/zplug" "$HOME/.zplug"
+        log_success "Zplug シンボリックリンク作成完了"
+        return
+    fi
+    
+    # ローカルインストール
     if [ -d "$HOME/.zplug" ]; then
         log_info "Zplugは既にインストール済み"
         return
     fi
     
     log_info "Zplugをインストール中..."
-    curl -sL --proto-redir -all,https https://raw.githubusercontent.com/zplug/installer/master/installer.zsh | zsh
+    if [ -n "$NFS_SHARED_TOOLS" ]; then
+        # NFS環境では共有ディレクトリにインストール
+        export ZPLUG_HOME="$NFS_SHARED_TOOLS/zplug"
+        curl -sL --proto-redir -all,https https://raw.githubusercontent.com/zplug/installer/master/installer.zsh | zsh
+        ln -sf "$NFS_SHARED_TOOLS/zplug" "$HOME/.zplug"
+    else
+        curl -sL --proto-redir -all,https https://raw.githubusercontent.com/zplug/installer/master/installer.zsh | zsh
+    fi
     log_success "Zplugのインストール完了"
 }
 
@@ -138,18 +163,40 @@ install_fzf() {
         return
     fi
     
+    # NFS環境ではシンボリックリンク
+    if [ -n "$NFS_SHARED_TOOLS" ] && [ -d "$NFS_SHARED_TOOLS/fzf" ]; then
+        if [ -L "$HOME/.fzf" ]; then
+            rm "$HOME/.fzf"
+        elif [ -d "$HOME/.fzf" ]; then
+            mv "$HOME/.fzf" "$HOME/.fzf.backup.$(date +%Y%m%d_%H%M%S)"
+        fi
+        ln -sf "$NFS_SHARED_TOOLS/fzf" "$HOME/.fzf"
+        log_success "FZF シンボリックリンク作成完了"
+        return
+    fi
+    
     if command -v fzf &> /dev/null; then
         log_info "FZFは既にインストール済み"
         return
     fi
     
     log_info "FZFをインストール中..."
-    if [ -d "$HOME/.fzf" ]; then
-        rm -rf "$HOME/.fzf"
+    local fzf_dir="$HOME/.fzf"
+    if [ -n "$NFS_SHARED_TOOLS" ]; then
+        fzf_dir="$NFS_SHARED_TOOLS/fzf"
     fi
     
-    git clone --depth 1 https://github.com/junegunn/fzf.git ~/.fzf
-    ~/.fzf/install --all --no-bash --no-fish
+    if [ -d "$fzf_dir" ]; then
+        rm -rf "$fzf_dir"
+    fi
+    
+    git clone --depth 1 https://github.com/junegunn/fzf.git "$fzf_dir"
+    "$fzf_dir/install" --all --no-bash --no-fish
+    
+    if [ -n "$NFS_SHARED_TOOLS" ]; then
+        ln -sf "$NFS_SHARED_TOOLS/fzf" "$HOME/.fzf"
+    fi
+    
     log_success "FZFのインストール完了"
 }
 
@@ -230,6 +277,18 @@ setup_nfs_shared_tools() {
         log_success "cargo シンボリックリンク作成完了"
     else
         log_warning "$NFS_SHARED_TOOLS/cargo が見つかりません"
+    fi
+    
+    # Rustup
+    if [ -d "$NFS_SHARED_TOOLS/rustup" ]; then
+        if [ -L "$HOME/.rustup" ]; then
+            rm "$HOME/.rustup"
+        elif [ -d "$HOME/.rustup" ]; then
+            log_warning "既存の ~/.rustup をバックアップ中..."
+            mv "$HOME/.rustup" "$HOME/.rustup.backup.$(date +%Y%m%d_%H%M%S)"
+        fi
+        ln -sf "$NFS_SHARED_TOOLS/rustup" "$HOME/.rustup"
+        log_success "rustup シンボリックリンク作成完了"
     fi
     
     log_success "NFS共有開発ツールのセットアップ完了"
