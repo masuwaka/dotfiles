@@ -1,0 +1,22 @@
+# 環境固有の設定ファイル
+.zshrc.local
+.zshrc.internal
+
+# セットアップ関連のマーカーファイル
+.dotfiles-setup-completed
+.dotfiles-last-update-check
+
+# エディタ設定
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# ログファイル
+*.log
+
+# 一時ファイル
+tmp/
+temp/

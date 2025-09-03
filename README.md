@@ -5,8 +5,10 @@ Zsh設定ファイルと自動セットアップスクリプト
 ## 📁 構成
 
 - `.zshrc` - Zsh設定ファイル（NFS環境自動検出・自動更新機能付き）
+- `.zshrc.local.example` - 環境固有設定のテンプレート
 - `setup.sh` - 自動セットアップスクリプト（Ubuntu 24.04+）
 - `update.sh` - 内部更新スクリプト（自動実行）
+- `.gitignore` - ローカル設定ファイルを除外
 
 ## 🚀 セットアップ
 
@@ -84,6 +86,31 @@ git pull
 ```
 
 ## 🔧 カスタマイズ
+
+### 環境固有設定
+環境固有の設定（プロキシ、内部ツール、認証情報など）は `.zshrc.local` に記述：
+
+```bash
+cp ~/.dotfiles/.zshrc.local.example ~/.zshrc.local
+vim ~/.zshrc.local  # 必要な設定を追加
+```
+
+`.zshrc.local` は git で管理されないため、機密情報も安全に記述できます。
+
+### フォークして独自リポジトリで管理する場合
+
+```bash
+# 1. GitLab等でフォーク後、originを変更
+git remote set-url origin https://gitlab.example.com/yourname/dotfiles.git
+
+# 2. 元のリポジトリをupstreamとして追加
+git remote add upstream https://github.com/masuwaka/dotfiles.git
+
+# 3. 元のリポジトリの更新を取り込む
+git fetch upstream
+git merge upstream/master  # または rebase
+git push origin master
+```
 
 ### デバッグモード
 ```bash
