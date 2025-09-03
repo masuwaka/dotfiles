@@ -41,10 +41,18 @@
 # export CUSTOM_CONFIG="/etc/custom/config.yaml"
 
 # -----------------------------------------------------------------------------
-# Git設定の上書き（特定環境用）
+# Git設定の上書き（マシン固有）
 # -----------------------------------------------------------------------------
-# git config --global http.sslVerify false  # 内部CA証明書環境用
-# git config --global user.email "user@example.com"
+# 個人用Git設定（自宅など）
+# git config --global user.name "Personal Name"
+# git config --global user.email "personal@gmail.com"
+
+# SSH設定（マシン固有のキー使用時）
+# git config --global core.sshCommand "ssh -i ~/.ssh/personal_key"
+
+# 特定ディレクトリでの設定切り替え例
+# git config --global includeIf.gitdir:~/work/.path ~/.gitconfig-work
+# git config --global includeIf.gitdir:~/personal/.path ~/.gitconfig-personal
 
 # -----------------------------------------------------------------------------
 # 追加の開発ツール設定

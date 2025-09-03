@@ -109,6 +109,24 @@ vim ~/.zshrc.local  # マシンごとの個別設定
 2. `.zshrc.custom`（組織共通、GitLab管理可能）
 3. `.zshrc.local`（マシン固有、git除外）
 
+#### Git設定の管理
+設定階層でGit設定も管理可能：
+
+**組織共通（.zshrc.custom）**:
+```bash
+# 組織用のGit設定
+git config --global user.name "Work Name"
+git config --global user.email "work@company.com"
+git config --global http.proxy "http://proxy:8080"
+```
+
+**マシン固有（.zshrc.local）**:
+```bash
+# 個人用Git設定（自宅マシンなど）
+git config --global user.name "Personal Name"  
+git config --global user.email "personal@gmail.com"
+```
+
 ### クローンして組織リポジトリで管理する場合
 
 ```bash

@@ -44,7 +44,21 @@
 # -----------------------------------------------------------------------------
 # Git設定（組織用）
 # -----------------------------------------------------------------------------
+# Git プロトコル設定
 # git config --global url."https://gitlab.example.com/".insteadOf "git@gitlab.example.com:"
+
+# 組織用Git設定
+# git config --global user.name "Your Name"
+# git config --global user.email "your.name@company.com"
+# git config --global init.defaultBranch "main"
+
+# SSL証明書設定（内部CA使用時）
+# git config --global http.sslVerify false
+# git config --global http.sslCAInfo "/path/to/company-ca.crt"
+
+# プロキシ設定（Gitでも必要な場合）
+# git config --global http.proxy "http://proxy.company.com:8080"
+# git config --global https.proxy "http://proxy.company.com:8080"
 
 # -----------------------------------------------------------------------------
 # 開発ツールの共通設定
