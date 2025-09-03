@@ -109,10 +109,12 @@ vim ~/.zshrc.local  # マシンごとの個別設定
 2. `.zshrc.custom`（組織共通、GitLab管理可能）
 3. `.zshrc.local`（マシン固有、git除外）
 
-### フォークして組織リポジトリで管理する場合
+### クローンして組織リポジトリで管理する場合
 
 ```bash
-# 1. GitLab等でフォーク後、originを変更
+# 1. GitLab等にクローン後、originを変更
+git clone https://github.com/masuwaka/dotfiles.git
+cd dotfiles
 git remote set-url origin https://gitlab.internal/yourorg/dotfiles.git
 
 # 2. 元のリポジトリをupstreamとして追加
