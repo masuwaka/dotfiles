@@ -6,47 +6,6 @@
 # =============================================================================
 
 # =============================================================================
-# 環境検出とNFS対応
-# =============================================================================
-DOTFILES_ON_NFS=false
-if [ -n "$HOME" ] && command -v stat &> /dev/null; then
-    if stat -f -c %T "$HOME" 2>/dev/null | grep -q nfs || \
-       df -T "$HOME" 2>/dev/null | grep -q nfs; then
-        DOTFILES_ON_NFS=true
-    fi
-fi
-
-# NFS環境での最適化設定
-if [ "$DOTFILES_ON_NFS" = true ]; then
-    LOCAL_CACHE_BASE=""
-    
-    # 安全なローカルディレクトリの選択
-    if [ -n "$XDG_RUNTIME_DIR" ] && [ -d "$XDG_RUNTIME_DIR" ] && [ -w "$XDG_RUNTIME_DIR" ]; then
-        LOCAL_CACHE_BASE="$XDG_RUNTIME_DIR"
-    elif [ -d "/tmp" ] && [ -w "/tmp" ]; then
-        LOCAL_CACHE_BASE="/tmp/$USER-zsh"
-        mkdir -p "$LOCAL_CACHE_BASE" && chmod 700 "$LOCAL_CACHE_BASE" 2>/dev/null
-    elif [ -d "/var/tmp" ] && [ -w "/var/tmp" ]; then
-        LOCAL_CACHE_BASE="/var/tmp/$USER-zsh"
-        mkdir -p "$LOCAL_CACHE_BASE" && chmod 700 "$LOCAL_CACHE_BASE" 2>/dev/null
-    else
-        LOCAL_CACHE_BASE="$HOME/.zsh-local-cache"
-        mkdir -p "$LOCAL_CACHE_BASE" && chmod 700 "$LOCAL_CACHE_BASE" 2>/dev/null
-    fi
-    
-    export ZSH_CACHE_DIR="$LOCAL_CACHE_BASE/cache"
-    mkdir -p "$ZSH_CACHE_DIR" && chmod 700 "$ZSH_CACHE_DIR" 2>/dev/null
-    export HISTFILE="$LOCAL_CACHE_BASE/history-$$"
-    setopt NO_HIST_FCNTL_LOCK
-    export DOTFILES_LIGHTWEIGHT_MODE=true
-else
-    export ZSH_CACHE_DIR="$HOME/.zsh/cache"
-    mkdir -p "$ZSH_CACHE_DIR"
-    export HISTFILE="$HOME/.zsh-history"
-    export DOTFILES_LIGHTWEIGHT_MODE=false
-fi
-
-# =============================================================================
 # プラグインマネージャー (Zplug)
 # =============================================================================
 source ~/.zplug/init.zsh
@@ -56,12 +15,8 @@ zplug "zsh-users/zsh-completions"
 zplug "zsh-users/zsh-autosuggestions"
 zplug "zsh-users/zsh-syntax-highlighting", defer:2
 zplug "zplug/zplug", hook-build:'zplug --self-manage'
-
-# 生産性向上プラグイン（NFS環境では軽量化）
-if [ "$DOTFILES_LIGHTWEIGHT_MODE" != "true" ]; then
-    zplug "MichaelAquilina/zsh-you-should-use"
-    zplug "djui/alias-tips"
-fi
+zplug "MichaelAquilina/zsh-you-should-use"
+zplug "djui/alias-tips"
 zplug "zsh-users/zsh-history-substring-search"
 
 # プラグインインストール確認
@@ -77,34 +32,36 @@ zplug load
 # =============================================================================
 # 基本設定
 # =============================================================================
-setopt auto_list          # 曖昧な補完で自動的に選択肢を表示
-setopt print_eight_bit    # 8ビット文字をリテラル表示
+# 表示
+setopt auto_menu             # タブで補完候補を表示
+setopt auto_list             # 補完候補が複数の場合に一覧表示 
+setopt list_packed            # 補完候補をできるだけ詰める
+setopt print_eight_bit       # バイト文字をリテラル表示
 
-# ディレクトリナビゲーション
-setopt AUTO_PUSHD
-setopt PUSHD_IGNORE_DUPS
-setopt PUSHD_SILENT
-DIRSTACKSIZE=20
+# プッシュ
+setopt auto_pushd            # ディレクトリ異動したらディレクトリスタックにプッシュ
+setopt pushd_ignore_dups     # ディレクトリスタックに重複があれば古い方を削除
 
-alias cd-='cd -'
-alias dirs='dirs -v'
-
-# 履歴設定
+# 履歴
+HIST_FILE=$HOME/.zsh-history
 HISTSIZE=100000
 SAVEHIST=100000
-setopt EXTENDED_HISTORY
-setopt HIST_IGNORE_ALL_DUPS
-setopt HIST_IGNORE_SPACE
-setopt HIST_REDUCE_BLANKS
-setopt HIST_SAVE_NO_DUPS
-setopt INC_APPEND_HISTORY
-setopt SHARE_HISTORY
+setopt extended_history      # 実行時間も保存
+setopt hist_ignore_all_dups  # コマンドを重複して保存しない
+setopt hist_reduce_blanks    # 余計な空白は詰めて保存
+setopt hist_ignore_dups      # 直前と同じコマンドは保存しない
+setopt hist_save_no_dups     # 直前と同じコマンドは古い方を削除
+setopt inc_append_history    # インクリメンタルに保存
+setopt share_history         # 他のシェルと履歴をリアルタイム共有
+
+# その他
+setopt no_beep              # ビープ音を鳴らさない
+setopt nolistbeep            # 補完候補表示時にもビープ音を鳴らさない
 
 # =============================================================================
 # 補完システム
 # =============================================================================
-autoload -Uz compinit
-compinit
+autoload -Uz compinit && compinit -u
 
 zstyle ':completion:*' menu select
 zstyle ':completion:*' matcher-list 'm:{a-z}={A-Z}'
@@ -120,28 +77,12 @@ export LS_COLORS='di=1;36:ln=1;35:ex=1;32'
 # =============================================================================
 # エイリアス
 # =============================================================================
-alias ls='ls --color=auto'
-alias ll='ls -la'
-alias la='ls -a'
-alias l='ls -CF'
 alias grep='grep --color=auto'
 
-# モダンツール（存在すれば）
-if command -v lsd &> /dev/null; then
-    alias ls='lsd --icon-theme=unicode'
-    alias ll='lsd -la --icon-theme=unicode'
-    alias tree='lsd --tree --icon-theme=unicode'
-fi
+alias ls='lsd --icon-theme=unicode'
+alias la='lsd -lah --icon-theme=unicode'
 
-if command -v batcat &> /dev/null; then
-    alias cat='batcat --style=plain'
-    alias ccat='batcat'
-fi
-
-if command -v rg &> /dev/null; then
-    alias grep='rg'
-fi
-
+alias cat='bat'
 
 # =============================================================================
 # プロンプト設定
@@ -149,18 +90,22 @@ fi
 setopt prompt_subst
 autoload -Uz colors && colors
 
+YELLOW='%F{3}'
+CYAN='%F{50}'
+GREEN='%F{82}'
+PINK='%F{213}'
+PURPLE='%F{54}'
+RESET='%f'
+NL=$'\n'
+
 precmd_python_venv(){
-  if command -v pyenv &> /dev/null; then
-    PYTHON_VERSION_STRING=$(pyenv version-name)
+    PYTHON_VERSION_STRING=$(python -V | cut -f2 -d " ")
     if [[ -n $VIRTUAL_ENV ]]; then
-      VENV=`basename $VIRTUAL_ENV`
-      PROMPT="%F{226}[%~]%f"$'\n'"(%F{123}$PYTHON_VERSION_STRING:$VENV%f)%F{002}%n%f@%F{207}%m%f %F{047}~>%f "
+        VENV=`basename $VIRTUAL_ENV`
+        PROMPT="${NL}${YELLOW}[%~]${NL}${RESET}(${CYAN}$PYTHON_VERSION_STRING${RESET}:${CYAN}$VENV${RESET})${GREEN}%n${RESET}@${PINK}%m ${PURPLE}~>${RESET} "
     else
-      PROMPT="%F{226}[%~]%f"$'\n'"(%F{123}$PYTHON_VERSION_STRING%f)%F{002}%n%f@%F{207}%m%f %F{047}~>%f "
+      PROMPT="${NL}${YELLOW}[%~]${NL}${RESET}(${CYAN}$PYTHON_VERSION_STRING${RESET})${GREEN}%n${RESET}@${PINK}%m ${PURPLE}~>${RESET} "
     fi
-  else
-    PROMPT="%F{226}[%~]%f"$'\n'"%F{002}%n%f@%F{207}%m%f %F{047}~>%f "
-  fi
 }
 
 precmd(){
@@ -168,53 +113,21 @@ precmd(){
 }
 
 # =============================================================================
-# FZF統合
+# peco
 # =============================================================================
-function fzf-select-history() {
-  BUFFER=$(\history -n -r 1 | fzf --query "$LBUFFER")
+function peco-select-history() {
+  BUFFER=$(\history -n -r 1 | peco --query "$LBUFFER")
   CURSOR=$#BUFFER
   zle clear-screen
 }
-zle -N fzf-select-history
-bindkey '^r' fzf-select-history
+zle -N peco-select-history
+bindkey '^r' peco-select-history
 
-[ -f ~/.fzf.zsh ] && source ~/.fzf.zsh
-export FZF_DEFAULT_OPTS='--height 40% --layout=reverse --border --inline-info'
 
 # =============================================================================
-# キーバインド
+# キーバインド (Emacs)
 # =============================================================================
-# 履歴検索
-if zplug check "zsh-users/zsh-history-substring-search"; then
-    bindkey '^[[A' history-substring-search-up
-    bindkey '^[[B' history-substring-search-down
-    bindkey '^P' history-substring-search-up
-    bindkey '^N' history-substring-search-down
-fi
-
-# Emacsキーバインド
 bindkey -e
-bindkey '^A' beginning-of-line
-bindkey '^E' end-of-line
-bindkey '^F' forward-char
-bindkey '^B' backward-char
-bindkey '^D' delete-char
-bindkey '^H' backward-delete-char
-bindkey '^K' kill-line
-bindkey '^U' backward-kill-line
-bindkey '^W' backward-kill-word
-bindkey '\ed' kill-word
-bindkey '^Y' yank
-bindkey '\ey' yank-pop
-bindkey '\ef' forward-word
-bindkey '\eb' backward-word
-bindkey '^L' clear-screen
-bindkey '^G' send-break
-bindkey '\e.' insert-last-word
-
-autoload -U edit-command-line
-zle -N edit-command-line
-bindkey '^X^E' edit-command-line
 
 # =============================================================================
 # 開発環境
@@ -225,95 +138,14 @@ if [ -d "/usr/local/cuda" ]; then
     export LD_LIBRARY_PATH="/usr/local/cuda/lib64:$LD_LIBRARY_PATH"
 fi
 
-# pyenv
-if [ -d "$HOME/.pyenv" ]; then
-    export PYENV_ROOT="$HOME/.pyenv"
-    command -v pyenv >/dev/null || export PATH="$PYENV_ROOT/bin:$PATH"
-    eval "$(pyenv init -)"
-fi
-
-# nvm
-export NVM_DIR="$HOME/.nvm"
-if [ -d "$NVM_DIR" ]; then
-    [ -s "$NVM_DIR/nvm.sh" ] && \. "$NVM_DIR/nvm.sh"
-    [ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"
-    nvm use --lts --silent 2>/dev/null || nvm use --lts
-fi
-
-# rbenv
-if [ -d "$HOME/.rbenv" ]; then
-    export PATH="$HOME/.rbenv/bin:$PATH"
-    eval "$(rbenv init -)"
-fi
-
 # =============================================================================
 # 追加ツール
 # =============================================================================
+# mise
+eval "$($HOME/.local/bin/mise activate zsh)"
+
 # zoxide
-if command -v zoxide &> /dev/null; then
-    eval "$(zoxide init zsh)"
-    alias j='z'
-fi
-
-# Claude CLI
-if [ -f "$HOME/.claude/local/claude" ]; then
-    alias claude="$HOME/.claude/local/claude"
-fi
-
-# PATH追加
-export PATH="$PATH:$HOME/.local/bin"
-
-# =============================================================================
-# 自動更新チェック
-# =============================================================================
-# 更新チェックを1日1回に制限
-DOTFILES_UPDATE_CHECK_FILE="$HOME/.dotfiles-last-update-check"
-DOTFILES_DIR="$HOME/.dotfiles"
-
-if [ -d "$DOTFILES_DIR" ] && [ -f "$DOTFILES_DIR/update.sh" ]; then
-    should_check_update=false
-    
-    if [ ! -f "$DOTFILES_UPDATE_CHECK_FILE" ]; then
-        should_check_update=true
-    else
-        # 最後のチェックから24時間経過しているか確認
-        last_check=$(stat -c %Y "$DOTFILES_UPDATE_CHECK_FILE" 2>/dev/null || stat -f %m "$DOTFILES_UPDATE_CHECK_FILE" 2>/dev/null || echo 0)
-        current_time=$(date +%s)
-        time_diff=$((current_time - last_check))
-        
-        if [ $time_diff -gt 86400 ]; then
-            should_check_update=true
-        fi
-    fi
-    
-    if [ "$should_check_update" = true ]; then
-        # バックグラウンドで更新チェック
-        (
-            cd "$DOTFILES_DIR" 2>/dev/null || exit 0
-            
-            # リモートの更新を確認
-            git fetch --quiet 2>/dev/null
-            LOCAL=$(git rev-parse @ 2>/dev/null)
-            REMOTE=$(git rev-parse @{u} 2>/dev/null)
-            
-            if [ "$LOCAL" != "$REMOTE" ] && [ -n "$REMOTE" ]; then
-                echo ""
-                echo "📦 Dotfiles の更新が利用可能です！"
-                echo "更新を実行しますか？ [Y/n]"
-                read -r response
-                if [[ ! "$response" =~ ^[Nn]$ ]]; then
-                    cd "$DOTFILES_DIR"
-                    git pull
-                    ./update.sh --all
-                    echo "✅ 更新が完了しました。新しいシェルを開いて変更を反映してください。"
-                fi
-            fi
-            
-            # 最終チェック時刻を更新
-            touch "$DOTFILES_UPDATE_CHECK_FILE"
-        ) &
-    fi
-fi
+eval "$(zoxide init zsh)"
 
 # =============================================================================
 # カスタム設定の読み込み（階層構造）
@@ -326,15 +158,4 @@ fi
 # 2. マシン固有設定（git管理対象外）
 if [ -f "$HOME/.zshrc.local" ]; then
     source "$HOME/.zshrc.local"
-fi
-
-# =============================================================================
-# デバッグ情報（必要時のみ）
-# =============================================================================
-if [ "$DOTFILES_ON_NFS" = true ] && [ -n "$DOTFILES_DEBUG" ]; then
-    echo "🔧 NFS環境で動作中 - 軽量化モード有効"
-    echo "   履歴ファイル: $HISTFILE"
-    echo "   キャッシュディレクトリ: $ZSH_CACHE_DIR"
-    echo "   ローカルキャッシュベース: $LOCAL_CACHE_BASE"
-    echo "   セッションPID: $$"
 fi
