@@ -24,4 +24,7 @@ tmp/
 temp/
 
 # ドットディレクトリ
-.*/
+.*/*
+.zcompdump
+.zsh-history
+.zshrc.custom
