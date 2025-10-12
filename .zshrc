@@ -43,7 +43,7 @@ setopt auto_pushd            # ディレクトリ異動したらディレクト�
 setopt pushd_ignore_dups     # ディレクトリスタックに重複があれば古い方を削除
 
 # 履歴
-HIST_FILE=$HOME/.zsh-history
+HISTFILE=$HOME/.zsh-history
 HISTSIZE=100000
 SAVEHIST=100000
 setopt extended_history      # 実行時間も保存
